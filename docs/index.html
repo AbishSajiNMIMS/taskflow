@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskFlow</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+    body { max-width: 52rem; margin: 0 auto; padding: 2rem 1rem; }
+    header, .task, .add-task { display: flex; align-items: center; gap: 1rem; }
+    header { justify-content: space-between; margin-bottom: 2rem; }
+    .card { padding: 1rem; background: #fff; border-radius: .75rem; box-shadow: 0 4px 18px #17203312; }
+    .add-task { align-items: end; flex-wrap: wrap; margin-bottom: 1rem; }
+    label { display: grid; gap: .35rem; flex: 1 1 12rem; font-weight: 600; }
+    input, select, button { padding: .65rem; border: 1px solid #c8d0dc; border-radius: .4rem; font: inherit; }
+    button { border: 0; color: #fff; background: #2563eb; cursor: pointer; }
+    button.secondary { background: #64748b; }
+    button.danger { background: #dc2626; }
+    .task { justify-content: space-between; border-bottom: 1px solid #e7ebf0; padding: .9rem 0; }
+    .task:last-child { border-bottom: 0; }
+    .task-title.done { color: #64748b; text-decoration: line-through; }
+    .task-actions { display: flex; gap: .5rem; }
+    .meta { color: #64748b; font-size: .9rem; }
+    .notice { padding: .75rem; color: #075985; background: #e0f2fe; border-radius: .4rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>TaskFlow</h1><p class="meta">GitHub Pages edition</p></div>
+    <button class="secondary" id="clearTasks" type="button">Clear all</button>
+  </header>
+  <p class="notice">This static edition stores tasks in this browser only. Use the Django edition for accounts and shared data.</p>
+  <section class="card">
+    <form class="add-task" id="taskForm">
+      <label>Task title <input id="title" maxlength="200" required placeholder="What needs doing?"></label>
+      <label>Priority <select id="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+      <label>Due date <input id="dueDate" type="date"></label>
+      <button type="submit">Add task</button>
+    </form>
+    <div id="tasks"></div>
+  </section>
+  <script>
+    const storageKey = "taskflow-github-pages-tasks";
+    let tasks = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    const save = () => {
+      localStorage.setItem(storageKey, JSON.stringify(tasks));
+      render();
+    };
+    const render = () => {
+      const list = document.querySelector("#tasks");
+      if (!tasks.length) {
+        list.innerHTML = '<p class="meta">No tasks yet. Add your first one above.</p>';
+        return;
+      }
+      list.innerHTML = tasks.map((task, index) => `
+        <article class="task">
+          <div>
+            <strong class="task-title${task.done ? " done" : ""}">${escapeHtml(task.title)}</strong>
+            <div class="meta">${task.priority[0].toUpperCase() + task.priority.slice(1)}${task.dueDate ? ` · due ${task.dueDate}` : ""}</div>
+          </div>
+          <div class="task-actions">
+            <button type="button" data-toggle="${index}">${task.done ? "Reopen" : "Complete"}</button>
+            <button class="danger" type="button" data-delete="${index}">Delete</button>
+          </div>
+        </article>`).join("");
+    };
+    const escapeHtml = (value) => value.replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    }[character]));
+    document.querySelector("#taskForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      tasks.unshift({
+        title: document.querySelector("#title").value.trim(),
+        priority: document.querySelector("#priority").value,
+        dueDate: document.querySelector("#dueDate").value,
+        done: false
+      });
+      event.target.reset();
+      save();
+    });
+    document.querySelector("#tasks").addEventListener("click", (event) => {
+      const toggle = event.target.dataset.toggle;
+      const remove = event.target.dataset.delete;
+      if (toggle !== undefined) tasks[toggle].done = !tasks[toggle].done;
+      if (remove !== undefined) tasks.splice(remove, 1);
+      if (toggle !== undefined || remove !== undefined) save();
+    });
+    document.querySelector("#clearTasks").addEventListener("click", () => {
+      tasks = [];
+      save();
+    });
+    render();
+  </script>
+</body>
+</html>
