@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tasks | TaskFlow</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+        body { max-width: 52rem; margin: 0 auto; padding: 2rem 1rem; }
+        header, .task, form.add-task { display: flex; align-items: center; gap: 1rem; }
+        header { justify-content: space-between; margin-bottom: 2rem; }
+        .card { padding: 1rem; background: white; border-radius: .75rem; box-shadow: 0 4px 18px #17203312; }
+        form.add-task { align-items: end; flex-wrap: wrap; margin-bottom: 1rem; }
+        form.add-task label { display: grid; gap: .35rem; flex: 1 1 12rem; font-weight: 600; }
+        input, select, button { padding: .65rem; border: 1px solid #c8d0dc; border-radius: .4rem; font: inherit; }
+        button { border: 0; color: white; background: #2563eb; cursor: pointer; }
+        button.secondary { background: #64748b; }
+        button.danger { background: #dc2626; }
+        .task { justify-content: space-between; border-bottom: 1px solid #e7ebf0; padding: .9rem 0; }
+        .task:last-child { border-bottom: 0; }
+        .task-title.done { color: #64748b; text-decoration: line-through; }
+        .task-actions { display: flex; gap: .5rem; }
+        .task-actions form { margin: 0; }
+        .meta { color: #64748b; font-size: .9rem; }
+        a { color: inherit; }
+    </style>
+</head>
+<body>
+<header>
+    <div><h1>My tasks</h1><p class="meta">Welcome, {{ user.username }}.</p></div>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary" type="submit">Sign out</button></form>
+</header>
+<section class="card">
+    <form class="add-task" method="post">
+        {% csrf_token %}
+        <label>Task title <input name="title" maxlength="200" required placeholder="What needs doing?"></label>
+        <label>Priority <select name="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+        <label>Due date <input type="date" name="due_date"></label>
+        <button type="submit">Add task</button>
+    </form>
+    {% for task in tasks %}
+    <article class="task">
+        <div>
+            <strong class="task-title{% if task.done %} done{% endif %}">{{ task.title }}</strong>
+            <div class="meta">{{ task.get_priority_display }}{% if task.due_date %} · due {{ task.due_date|date:"M j, Y" }}{% endif %}</div>
+        </div>
+        <div class="task-actions">
+            <form method="post" action="{% url 'toggle_task' task.id %}">{% csrf_token %}<button type="submit">{% if task.done %}Reopen{% else %}Complete{% endif %}</button></form>
+            <form method="post" action="{% url 'delete_task' task.id %}">{% csrf_token %}<button class="danger" type="submit">Delete</button></form>
+        </div>
+    </article>
+    {% empty %}<p class="meta">No tasks yet. Add your first one above.</p>{% endfor %}
+</section>
+</body>
+</html>

@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Task
 
@@ -32,6 +33,7 @@ def task_list(request):
 
 
 @login_required
+@require_POST
 def toggle_task(request, task_id):
     task = get_object_or_404(
         Task,
@@ -46,6 +48,7 @@ def toggle_task(request, task_id):
 
 
 @login_required
+@require_POST
 def delete_task(request, task_id):
     task = get_object_or_404(
         Task,
